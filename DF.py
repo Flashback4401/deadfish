@@ -9,14 +9,13 @@ br.addheaders = [('user-agent', 'Mozilla/5.0 (X11: U; Linux i686; en-US; rv:1.9,
 br.open(url)
 
 br.select_form(name = "q")
-br["q"] = "pink season"
+br["q"] =  input("Enter: ")
 res = br.submit()
 
-new_link = br.geturl()
-new_link = new_link[:len(new_link) - 1] + '100'
-
-print new_link
-r = requests.get(new_link)
+link_for_music = br.geturl()
+link_for_music = link_for_music[:len(link_for_music) - 1] + '101' #gets the link for the page that only displays files under the audio category
+print link_for_music
+r = requests.get(link_for_music)
 content = r.text
 br.close()
 
@@ -45,31 +44,40 @@ def find_titles():
     search_results = []
     magnet_links = []
     final_search_results = {}
-    for link in soup.find_all("a", {"class": "detLink"}): #searches for titles
-        search_results.append(link.text)
+    number_of_options = 0
+    first_title_name = ""
+    for title in soup.find_all("a", {"class": "detLink"}): #searches for titles
+        search_results.append(title.text)
+        number_of_options += 1
+        if number_of_options == 1:
+            first_title_name = title.text
     for magnet_link in soup.find_all("a", {"title": "Download this torrent using magnet"}): #searches for links
             magnet_links.append(magnet_link.get('href'))
-    for count in range(0, len(search_results)):
-        final_search_results[search_results[count] ] = magnet_links[count] #merges the titles and links into a dictionary
-    return final_search_results
+    for merge in range(0, len(search_results)):
+        final_search_results[search_results[merge] ] = magnet_links[merge] #merges the titles and links into a dictionary
+    return [final_search_results, first_title_name]
 #------------------in progress--------------------
-final = find_titles()
+final = find_titles()[0] #the full list of links taken from the site
+first_title_name = find_titles()[1] #the title of the very first thing to show up on pirate bay
 print(final)
+print(first_title_name)
 def choose_best_title(final):
     """
        will take the search_results and will find the best title (key), and then will return the link to that title (the value)
+       (might make some algorithm later on that takes the top 5 titles that pop up and chooses the best one according to the rating)
     """
-    pass
-choose_best_title(final)
+
+    return final.get(first_title_name)#returns final magnet link
+print(choose_best_title(final))#prints the magnet link
 
 with open("mechanize_results.html", "w") as f:
      html = soup.prettify("utf-8")
      f.write(html)
 
 """
-Remove all the un-useful page elements.
+Remove all the un-useful page elements. 
 
-Make a algorithm to take all the search result titles in the html and put them into a dictionary, along with the value being the link.
+Make a algorithm to take all the search result titles in the html and put them into a dictionary, along with the value being the link. 
 
 Put the dictionary trough a bunch of for loops so the best option is chosen. This function should return the 
 best title.
